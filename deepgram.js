@@ -3,7 +3,7 @@ const client = new Deepgram(process.env.DEEPGRAM_API_KEY);
 
 let keepAlive;
 
-const setupDeepgram = (socket) => {
+const setupDeepgram = () => {
     const deepgramLive = client.transcription.live({
         language: "en",
         smart_format: true,
@@ -21,23 +21,23 @@ const setupDeepgram = (socket) => {
     deepgramLive.addListener("close", () => {
         console.log(`Connection to deepgram closed`);
     });
-    deepgramLive.addListener("transcriptReceived", (message) => {
-        const data = JSON.parse(message);
-        const { type } = data;
-      switch (type) {
-        case "Results":
-          console.log("deepgram: transcript received");
-          const transcript = data.channel.alternatives[0].transcript ?? "";
-          socket.emit("transcript", transcript);
-          break;
-        case "Metadata":
-          console.log("deepgram: metadata received");
-          break;
-        default:
-          console.log("deepgram: unknown packet received");
-          break;
-      }
-    });
+//    deepgramLive.addListener("transcriptReceived", (message) => {
+//        const data = JSON.parse(message);
+//        const { type } = data;
+//      switch (type) {
+//        case "Results":
+//          console.log("deepgram: transcript received");
+//          const transcript = data.channel.alternatives[0].transcript ?? "";
+//          socket.emit("transcript", transcript);
+//          break;
+//        case "Metadata":
+//          console.log("deepgram: metadata received");
+//          break;
+//        default:
+//          console.log("deepgram: unknown packet received");
+//          break;
+//      }
+//    });
     return deepgramLive;
 }
 

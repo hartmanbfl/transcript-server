@@ -5,7 +5,7 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-const {setupDeepgram, shutdownDeepgram, getCurrentDeepgramState, sendStreamToDeepgram, abortStream} = require('./deepgram');
+const { setupDeepgram, shutdownDeepgram, getCurrentDeepgramState, sendStreamToDeepgram, abortStream } = require('./deepgram');
 
 app.use(cors());
 
@@ -23,7 +23,7 @@ let deepgram;
 // Webserver
 app.use(express.static("public/"));
 app.get('/', (req, res) => {
-  res.sendFile(__dirname, + '/public/index.html');
+    res.sendFile(__dirname, + '/public/index.html');
 });
 
 
@@ -37,7 +37,25 @@ io.on('connection', (socket) => {
     // Deepgram Controls
     socket.on('deepgram_connect', () => {
         console.log(`Deepgram connect requested`);
-        deepgram = setupDeepgram(socket);
+        deepgram = setupDeepgram();
+        deepgram.addListener("transcriptReceived", (message) => {
+            const data = JSON.parse(message);
+            const { type } = data;
+            switch (type) {
+                case "Results":
+                    console.log("deepgram: transcript received");
+                    const transcript = data.channel.alternatives[0].transcript ?? "";
+                    io.emit("transcript", transcript);
+                    break;
+                case "Metadata":
+                    console.log("deepgram: metadata received");
+                    break;
+                default:
+                    console.log("deepgram: unknown packet received");
+                    break;
+            }
+        });
+
     });
     socket.on('deepgram_disconnect', () => {
         console.log(`Deepgram disconnect requested`);
@@ -49,18 +67,19 @@ io.on('connection', (socket) => {
         console.log(`Current state of deepgram is: ${state}`);
     });
 
+
     // Streaming Controls
     socket.on('streaming_start', () => {
         sendStreamToDeepgram(deepgram, url);
     });
     socket.on('streaming_stop', () => {
-        abortStream(); 
+        abortStream();
     });
 
     // Messages
     socket.on('transcript', (transcript) => {
         // Does not go to originator
-//        socket.broadcast.to().emit('transcript', transcript);
+        //        socket.broadcast.to().emit('transcript', transcript);
         io.emit('transcript', transcript);
         console.log(`Transcript received by server: ${transcript}`);
     });
@@ -73,5 +92,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(3000, () => {
-  console.log('listening on *:3000');
+    console.log('listening on *:3000');
 });
