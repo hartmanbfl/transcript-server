@@ -5,7 +5,10 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-const { setupDeepgram, shutdownDeepgram, getCurrentDeepgramState, sendStreamToDeepgram, abortStream } = require('./deepgram');
+const {transcriptSubject} = require('./globals');
+const { setupDeepgram, shutdownDeepgram, getCurrentDeepgramState, 
+    sendStreamToDeepgram, abortStream } = require('./deepgram');
+const { registerForTranscripts, addTranslationLanguage } = require('./translate');
 
 app.use(cors());
 
@@ -26,7 +29,8 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname, + '/public/index.html');
 });
 
-
+// Register the translation service to receive the transcripts
+registerForTranscripts(io);
 
 io.on('connection', (socket) => {
     console.log(`Client connected to our socket.io server`);
@@ -45,6 +49,7 @@ io.on('connection', (socket) => {
                 case "Results":
                     console.log("deepgram: transcript received");
                     const transcript = data.channel.alternatives[0].transcript ?? "";
+                    transcriptSubject.next(transcript);
                     io.emit("transcript", transcript);
                     break;
                 case "Metadata":
@@ -74,6 +79,17 @@ io.on('connection', (socket) => {
     });
     socket.on('streaming_stop', () => {
         abortStream();
+    });
+
+    // Translation Rooms
+    socket.on('subscribe', (channel) => {
+        console.log(`Subscribed call to room: ${channel}`);
+        socket.join(channel);
+        addTranslationLanguage(channel);
+        console.log(`Current rooms: ${JSON.stringify(socket.rooms)}`);
+    });
+    socket.on('unsubscribe', (channel) => {
+        socket.leave(channel);
     });
 
     // Messages

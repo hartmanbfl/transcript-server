@@ -1,4 +1,5 @@
 const { Deepgram } = require("@deepgram/sdk");
+
 const client = new Deepgram(process.env.DEEPGRAM_API_KEY);
 
 let keepAlive;
@@ -81,5 +82,5 @@ module.exports = {
     getCurrentDeepgramState,
     setupDeepgram,
     sendStreamToDeepgram,
-    shutdownDeepgram
+    shutdownDeepgram,
 }

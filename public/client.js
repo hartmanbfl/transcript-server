@@ -13,7 +13,25 @@ window.addEventListener("load", () => {
         }
     });
 
-    socket.on('chat_message', function (msg) {
+    let deepgramConnect = document.getElementById('deepConnect');
+    let deepgramDisconnect = document.getElementById('deepDisconnect');
+    let startStreaming = document.getElementById('streamStart');
+    let stopStreaming = document.getElementById('streamStop');
+
+    deepgramConnect.addEventListener("click", function() {
+        socket.emit('deepgram_connect');
+    });
+    deepgramDisconnect.addEventListener("click", function() {
+        socket.emit('deepgram_disconnect');
+    });
+    startStreaming.addEventListener("click", function() {
+        socket.emit('streaming_start');
+    });
+    stopStreaming.addEventListener("click", function() {
+        socket.emit('streaming_stop');
+    });
+
+    socket.on('transcript', function (msg) {
         var item = document.createElement('li');
         item.textContent = msg;
         messages.appendChild(item);
